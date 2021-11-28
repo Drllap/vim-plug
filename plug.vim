@@ -2226,7 +2226,7 @@ function! plug#shellescape(arg, ...)
     return a:arg
   endif
   let opts = a:0 > 0 && type(a:1) == s:TYPE.dict ? a:1 : {}
-  let shell = get(opts, 'shell', s:is_win ? 'cmd.exe' : 'sh')
+  let shell = get(opts, 'shell', &shell)
   let script = get(opts, 'script', 1)
   if shell =~# 'cmd\(\.exe\)\?$'
     return s:shellesc_cmd(a:arg, script)
@@ -2267,7 +2267,12 @@ endfunction
 
 function! s:with_cd(cmd, dir, ...)
   let script = a:0 > 0 ? a:1 : 1
-  return printf('cd%s %s && %s', s:is_win ? ' /d' : '', plug#shellescape(a:dir, {'script': script}), a:cmd)
+  let command_separator = s:is_powershell(&shell) ? ';' : '&&'
+  return printf('cd%s %s %s %s', 
+              \ s:is_win && !s:is_powershell(&shell) ? ' /d' : '', 
+              \ plug#shellescape(a:dir, {'script': script}),
+              \ command_separator,
+              \ a:cmd)
 endfunction
 
 function! s:system(cmd, ...)
